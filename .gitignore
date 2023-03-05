@@ -1,0 +1,14 @@
+data
+__pycache__
+logs
+teaser
+
+task*.sh
+*.jpg
+*.png
+*.pyc
+*.whl
+*.zip
+*.gin
+*.jpg
+*.npy
