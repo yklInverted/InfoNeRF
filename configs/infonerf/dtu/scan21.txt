@@ -17,7 +17,7 @@ netchunk = 16384
 netdepth = 4
 
 i_testset = 10000
-i_video = 10000
+i_video = 100000
 N_iters = 10001
 
 N_entropy=1024

@@ -63,6 +63,8 @@ def img2ssim(x,y, mask=None):
     ms_ssim_ = ms_ssim(x,y, data_range=1)
     return ssim_, ms_ssim_
 
+
+
 # Positional encoding (section 5.1)
 class Embedder:
     def __init__(self, **kwargs):

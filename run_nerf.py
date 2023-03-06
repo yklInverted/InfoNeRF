@@ -31,6 +31,8 @@ import random
 import wandb
 import torchvision
 
+import lpips
+lpips_fn = lpips.LPIPS(net='vgg')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 np.random.seed(0)
@@ -1250,25 +1252,40 @@ def train():
             test_psnr = mse2psnr(test_loss)
             
             test_redefine_psnr = img2psnr_redefine(torch.Tensor(rgbs), images[i_test])
-           
             test_ssim, test_msssim = img2ssim(torch.Tensor(rgbs), images[i_test])
             
-            if args.wandb:
-                wandb.log({ 'test_psnr': test_psnr, 
-                            'test_psnr_re' : test_redefine_psnr,
-                            'test_ssim': test_ssim
-                    }, step=i)
+            gt = images[i_test]
+            pred = torch.Tensor(rgbs)
+            gt, pred = (gt-0.5)*2., (pred-0.5)*2.
+            gt, pred = gt.permute([0,3,1,2]),pred.permute([0,3,1,2])
+            test_lpips = lpips_fn(gt.cpu(), pred.cpu()).mean()
+            #ipdb.set_trace()
             
             if args.dataset_type == 'dtu':
-                if args.maskdir is not None:
-                    test_psnr_mask = img2psnr_mask(torch.Tensor(rgbs), images[i_test], torch.Tensor(masks[i_test]))
-                    test_ssim_m, test_msssim_m = img2ssim(torch.Tensor(rgbs), images[i_test], torch.Tensor(masks[i_test]))
                 
-                    if args.wandb:
-                        wandb.log({ 'test_psnr_mask': test_psnr_mask, 
-                            'test_ssim_m': test_ssim_m, 
-                            'test_msssim_m': test_msssim_m, 
-                            }, step=i)
+                test_psnr_mask = img2psnr_mask(torch.Tensor(rgbs), images[i_test], torch.Tensor(masks[i_test]))
+                test_ssim_mask, test_msssim_m = img2ssim(torch.Tensor(rgbs), images[i_test], torch.Tensor(masks[i_test]))
+                #ipdb.set_trace()
+                mask = masks[i_test]
+                mask = np.array([mask,mask,mask]).transpose(1,0,2,3)
+                gt = gt.cpu()*mask + (1-mask)
+                pred = pred.cpu()*mask + (1-mask)
+                test_lpips_mask = lpips_fn(gt.float(), pred.float()).mean()
+                
+                with open(f"{args.basedir}/{args.expname}/metrics.txt","w",) as metric_file:
+                    metric_file.write(f"PSNR: {test_psnr_mask}\n")
+                    metric_file.write(f"SSIM: {test_ssim_mask}\n")
+                    metric_file.write(f"LPIPS: {test_lpips_mask}")
+                    
+            else:
+                with open(f"{args.basedir}/{args.expname}/metrics.txt","w",) as metric_file:
+                    metric_file.write(f"PSNR: {test_psnr}\n")
+                    metric_file.write(f"SSIM: {test_ssim}\n")
+                    metric_file.write(f"LPIPS: {test_lpips}")       
+                    
+            if args.i_testset==1:
+                return
+
 
         if i%args.i_print==0:
             tqdm.write(f"[TRAIN] Iter: {i} Loss: {loss.item()}  PSNR: {psnr.item()}")

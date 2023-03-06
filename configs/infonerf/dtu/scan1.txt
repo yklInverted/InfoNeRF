@@ -17,8 +17,8 @@ netchunk = 16384
 netdepth = 4
 
 i_testset = 10000
-i_video = 10000
-N_iters = 10001
+i_video = 100000
+N_iters = 10002
 
 N_entropy=1024
 computing_entropy_all=False
@@ -28,7 +28,7 @@ entropy_ignore_smoothing=False
 entropy_acc_threshold=0.01
 
 smoothing=True
-smoothing_activation=normks
+smoothing_activation=norm
 smoothing_lambda=0.00002
 near_c2w_rot=5
 smoothing_rate=0.5
