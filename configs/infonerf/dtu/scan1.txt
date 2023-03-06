@@ -1,6 +1,6 @@
-expname = dtu/scan114
+expname = dtu/scan1
 basedir = ./logs
-datadir = ./data/dtu/scan114
+datadir = ./data/dtu/scan1
 dataset_type = dtu
 
 fewshot = 3
@@ -28,7 +28,7 @@ entropy_ignore_smoothing=False
 entropy_acc_threshold=0.01
 
 smoothing=True
-smoothing_activation=norm
+smoothing_activation=normks
 smoothing_lambda=0.00002
 near_c2w_rot=5
 smoothing_rate=0.5

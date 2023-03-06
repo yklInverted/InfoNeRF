@@ -1,6 +1,6 @@
-expname = nerf/lego
+expname = nerf/drums
 basedir = ./logs
-datadir = ./data/nerf_synthetic/lego
+datadir = ./data/nerf_synthetic/drums
 dataset_type = blender
  
 no_batching = True

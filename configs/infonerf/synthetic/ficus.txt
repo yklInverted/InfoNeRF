@@ -1,6 +1,6 @@
-expname = nerf/lego
+expname = nerf/ficus
 basedir = ./logs
-datadir = ./data/nerf_synthetic/lego
+datadir = ./data/nerf_synthetic/ficus
 dataset_type = blender
  
 no_batching = True

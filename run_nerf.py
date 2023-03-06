@@ -717,51 +717,66 @@ def train():
         render_first_time=False
 
     ########################################
-    #              DTU                     #
+    #              LLFF                    #
     ########################################
     if args.dataset_type == 'llff':
-        data_info = torch.load('./data/nerf_llff_data/data_splits.pth')
-        if args.datadir.split('/')[-1] in data_info.keys():
-            category = args.datadir.split('/')[-1]
-        if args.datadir.split('/')[-2] in data_info.keys():
-            category = args.datadir.split('/')[-2]
-        full_datadir = os.path.join('data/nerf_llff_data/', category)
-        images, poses, bds, render_poses, i_test = load_llff_data(full_datadir, args.factor,
+        '''
+            data_info = torch.load('./data/nerf_llff_data/data_splits.pth')
+            if args.datadir.split('/')[-1] in data_info.keys():
+                category = args.datadir.split('/')[-1]
+            if args.datadir.split('/')[-2] in data_info.keys():
+                category = args.datadir.split('/')[-2]
+            full_datadir = os.path.join('data/nerf_llff_data/', category)
+        '''
+        images, poses, bds, render_poses, i_test = load_llff_data(args.datadir, args.factor,
                                                                   recenter=True, bd_factor=.75,
                                                                   spherify=args.spherify)
+        
         hwf = poses[0,:3,-1]
         poses = poses[:,:3,:4]
         print('Loaded llff', images.shape, render_poses.shape, hwf, args.datadir)
         
-        if not isinstance(i_test, list):
-            i_test = [i_test]
+        '''
+            if not isinstance(i_test, list):
+                i_test = [i_test]
 
-        if args.llffhold > 0:
-            print('Auto LLFF holdout,', args.llffhold)
-            i_test = np.arange(images.shape[0])[::args.llffhold]
+            if args.llffhold > 0:
+                print('Auto LLFF holdout,', args.llffhold)
+                i_test = np.arange(images.shape[0])[::args.llffhold]
 
-        if args.test_scene is not None:
-            i_test = np.array([i for i in args.test_scene])
+            if args.test_scene is not None:
+                i_test = np.array([i for i in args.test_scene])
 
-        if i_test[0] < 0:
-            i_test = []
+            if i_test[0] < 0:
+                i_test = []
 
-        i_val = i_test
-        
-        if args.train_scene is None:
-            i_train = np.array([i for i in np.arange(int(images.shape[0])) if
-                        (i not in i_test and i not in i_val)])
-        else:
-            i_train = np.array([i for i in args.train_scene if
-                        (i not in i_test and i not in i_val)])
-       
-        if args.fewshot > 0:
-            i_train = data_info[category][f'{args.fewshot}shot_split'][0]
+            i_val = i_test
+            
             if args.train_scene is None:
-                np.random.seed(args.fewshot_seed)
-                i_train = np.random.choice(i_train, args.fewshot, replace=False)
+                i_train = np.array([i for i in np.arange(int(images.shape[0])) if
+                            (i not in i_test and i not in i_val)])
             else:
-                i_train = np.array(args.train_scene)
+                i_train = np.array([i for i in args.train_scene if
+                            (i not in i_test and i not in i_val)])
+        
+            if args.fewshot > 0:
+                i_train = data_info[category][f'{args.fewshot}shot_split'][0]
+                if args.train_scene is None:
+                    np.random.seed(args.fewshot_seed)
+                    i_train = np.random.choice(i_train, args.fewshot, replace=False)
+                else:
+                    i_train = np.array(args.train_scene)
+        '''
+        
+        pairs = np.load('./configs/pairs.npy',allow_pickle = True).item()
+        scene = os.path.basename(args.datadir)
+        i_train = pairs[f'{scene}_train'][:]
+        i_val = pairs[f'{scene}_val']
+        i_test = pairs[f'{scene}_test']
+        
+        if args.fewshot > 0:
+            i_train = i_train[:args.fewshot]
+            
         print('i_train', i_train)
         print('DEFINING BOUNDS')
         
@@ -771,6 +786,8 @@ def train():
         else:
             near = 0.
             far = 1.
+            
+        #ipdb.set_trace()
         print('NEAR FAR', near, far)
 
     ########################################
@@ -778,27 +795,40 @@ def train():
     ########################################
 
     elif args.dataset_type == 'dtu':
-        images, poses, hwf, masks = load_dtu_data(args.datadir, args.train_scene, args.maskdir)
+        
+        images, poses, bds, _, hwf, depths = load_dtu_data(args.datadir)
+        masks = depths>0
+        #images, poses, hwf, masks = load_dtu_data(args.datadir, args.train_scene, args.maskdir)
+        #ipdb.set_trace()
+        pairs = np.load('./configs/pairs.npy',allow_pickle = True).item()
+        i_train = pairs[f'dtu_train']
+        i_val = pairs[f'dtu_val']
+        i_test = pairs[f'dtu_test']
+        
+        if args.fewshot > 0:
+            i_train = i_train[:args.fewshot]
+            
         render_poses = poses
-        print('Loaded DTU', images.shape, poses.shape, hwf, args.datadir)
-        if args.test_scene is not None:
-            i_test = np.array([i for i in args.test_scene])
+        print('Loaded DTU', images.shape, poses.shape, hwf, args.datadir)        
+        '''
+            if args.test_scene is not None:
+                i_test = np.array([i for i in args.test_scene])
 
-        if i_test[0] < 0:
-            i_test = []
+            if i_test[0] < 0:
+                i_test = []
 
-        i_val = i_test
-        if args.train_scene is None:
-            i_train = np.array([i for i in np.arange(int(images.shape[0])) if
-                        (i not in i_test and i not in i_val)])
-        else:
-            i_train = np.array([i for i in args.train_scene if
-                        (i not in i_test and i not in i_val)])
-        
-        i_test = np.array([i for i in range(len(poses)) if (i not in i_train)])
-        
-        near = 0.1
-        far = 5.0
+            i_val = i_test
+            if args.train_scene is None:
+                i_train = np.array([i for i in np.arange(int(images.shape[0])) if
+                            (i not in i_test and i not in i_val)])
+            else:
+                i_train = np.array([i for i in args.train_scene if
+                            (i not in i_test and i not in i_val)])
+            
+            i_test = np.array([i for i in range(len(poses)) if (i not in i_train)])
+        '''
+        near = bds.min()#0.1
+        far = bds.max()#5.0
     
     ########################################
     #              Blender                 #
@@ -813,7 +843,7 @@ def train():
         
         if args.fewshot > 0:
             i_train = i_train[:args.fewshot]
-        ipdb.set_trace()
+        #ipdb.set_trace()
         '''
         if args.fewshot > 0:
             if args.train_scene is None:

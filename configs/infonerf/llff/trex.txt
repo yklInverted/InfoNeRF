@@ -1,0 +1,41 @@
+expname = llff/trex
+basedir = ./logs
+datadir = ./data/nerf_llff_data/trex
+dataset_type = llff
+
+factor = 4
+
+no_batching = True
+chunk=8192
+ 
+use_viewdirs = True
+lrate_decay = 100
+ 
+N_samples = 64
+N_importance = 128
+N_rand = 1024
+N_iters = 20002
+
+i_video=1000000
+i_testset=20000
+
+# Entropy
+entropy = True
+N_entropy = 1024
+entropy_ray_zvals_lambda = 0.001
+precrop_iters = 500
+precrop_frac = 0.5
+no_batching = True
+wandb = False
+i_wandb = 100
+
+# Smooth
+smoothing = True
+smooth_sampling_method='near_pixel'
+smooth_pixel_range=1 # should be optimized for your dataset (usually, the best value was 1)
+smoothing_activation=softmax
+smoothing_lambda=0.0001 # should be optimized for your dataset
+smoothing_step = 2500
+
+fewshot = 3
+train_scene = [26, 86, 2, 55]

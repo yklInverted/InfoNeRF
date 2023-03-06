@@ -1,6 +1,6 @@
-expname = dtu/scan114
+expname = dtu/scan21
 basedir = ./logs
-datadir = ./data/dtu/scan114
+datadir = ./data/dtu/scan21
 dataset_type = dtu
 
 fewshot = 3
